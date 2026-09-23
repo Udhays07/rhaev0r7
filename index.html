@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>rhaev0r7 — Udhaya Moorthy, Software Engineer</title>
+    <meta name="description" content="Udhaya Moorthy (rhaev0r7) — a software engineer who started with interfaces and is now exploring the systems behind them: React, TypeScript, Python, FastAPI and applied AI." />
+    <meta name="author" content="Udhaya Moorthy (rhaev0r7)" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f3efe6" media="(prefers-color-scheme: light)" />
+    <meta name="color-scheme" content="dark light" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="rhaev0r7 — Udhaya Moorthy, Software Engineer" />
+    <meta property="og:description" content="I started with interfaces. Now I'm exploring the systems behind them." />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <!-- Resolve the theme before first paint so there is no flash. -->
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem('theme');
+          var theme = stored || (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+          document.documentElement.dataset.theme = theme;
+        } catch (e) {
+          document.documentElement.dataset.theme = 'dark';
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <noscript>This portfolio is interactive and needs JavaScript. Reach me at udhayamoorthysj@gmail.com.</noscript>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
