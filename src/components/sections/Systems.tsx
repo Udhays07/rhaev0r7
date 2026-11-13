@@ -353,9 +353,8 @@ export function Systems() {
     <section id="systems" className="py-20 md:py-28">
       <div className="container-page">
         <SectionHeader
-          index="04"
-          label="Systems"
-          title={['What it looks like,', <>and how it <em className="italic text-accent">works.</em></>]}
+          spray="SYSTEMS"
+          title={['What it looks like,', <>and how it <em>works.</em></>]}
           intro="The same feature, two ways. Switch to engineering to see the architecture underneath — then send a request through it."
         />
 

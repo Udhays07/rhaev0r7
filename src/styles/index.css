@@ -1,48 +1,123 @@
 @import "tailwindcss";
-@import "@fontsource-variable/fraunces/opsz.css";
-@import "@fontsource-variable/fraunces/opsz-italic.css";
-@import "@fontsource-variable/geist";
+@import "@fontsource-variable/bricolage-grotesque/standard.css";
 @import "@fontsource-variable/geist-mono";
+@import "@fontsource/permanent-marker/latin-400.css";
 
 /* ─────────────────────────────────────────────────────────────
-   Design tokens
-   Raw values live on :root and swap per theme. Tailwind reads
-   them through @theme inline, so `bg-bg`, `text-ink`, `border-line`
-   etc. follow the active theme automatically.
+   Night Shift / Day Shift
+   A street-poster portfolio. Each theme is its own world, not an
+   inversion of the other:
+   - Night: asphalt black, and teal.
+   - Day:   concrete grey, and the same teal (deeper for small text).
+   The same colour rules hold in both:
+   - the cool brand colour does every highlight, spray, flood and focus ring;
+   - orange belongs to Zero: the mascot, and the 0 in the handle it comes from.
+   Neutrals are tinted toward the brand colour.
+   Raw values live on :root and swap per theme; Tailwind reads them
+   through @theme inline. A `.flood` section re-maps the same tokens,
+   so anything inside it recolours itself.
    ───────────────────────────────────────────────────────────── */
 
 :root {
-  /* dark — true black */
-  --bg: #000000;
-  --bg-raised: #0c0c0c;
-  --bg-sunken: #050505;
-  --ink: #f2f2f0;
-  --ink-muted: #a1a1a1;
-  --ink-faint: #6b6b6b;
-  --line: rgb(255 255 255 / 0.1);
-  --line-strong: rgb(255 255 255 / 0.2);
-  --accent: #ff5a1f;
-  --accent-ink: #000000;
-  --accent-soft: rgb(255 90 31 / 0.14);
-  --grain-opacity: 0.035;
+  /* night shift */
+  --bg: #0b0b0c;
+  --bg-raised: #151517;
+  --bg-sunken: #070708;
+  --ink: #f3f0e8;
+  --ink-muted: #b3b0a8;
+  --ink-faint: #8a8780;
+  --line: rgb(243 240 232 / 0.12);
+  --line-strong: rgb(243 240 232 / 0.24);
+  --accent: #19c2b0;
+  --accent-ink: #0b0b0c;
+  --accent-soft: rgb(25 194 176 / 0.14);
+
+  /* graffiti: a dim wall tag behind most sections, a hot one in the hero */
+  --spray: #132220;
+  --spray-hot: #19c2b0;
+
+  /* full-bleed colour sections: cool, so orange Zero is the warm thing */
+  --flood: #19c2b0;
+  --flood-ink: #0b0b0c;
+  --flood-muted: #0a3a35;
+  --flood-spray: #14ad9d;
+  --flood-raised: #2ccbb9;
+  --flood-sunken: #12ab9b;
+
+  /* gaffer tape for the nav and calls to action */
+  --tape: #1d1d20;
+  --tape-ink: #f3f0e8;
+
+  --zero: #ff5a1f;
+  /* highlights on the always-dark terminal screen */
+  --screen-accent: #19c2b0;
+  --grain-opacity: 0.045;
   color-scheme: dark;
 }
 
 :root[data-theme="light"] {
-  /* light — paper */
-  --bg: #f3efe6;
-  --bg-raised: #ebe6da;
-  --bg-sunken: #e6e0d2;
-  --ink: #1a1814;
-  --ink-muted: #5c574d;
-  --ink-faint: #8b8579;
-  --line: rgb(26 24 20 / 0.12);
-  --line-strong: rgb(26 24 20 / 0.26);
-  --accent: #d6400b;
-  --accent-ink: #f3efe6;
-  --accent-soft: rgb(214 64 11 / 0.1);
-  --grain-opacity: 0.08;
+  /* day shift */
+  --bg: #e6e6e1;
+  --bg-raised: #f1f1ed;
+  --bg-sunken: #d9d9d3;
+  --ink: #101114;
+  --ink-muted: #44464c;
+  --ink-faint: #5c5e65;
+  --line: rgb(16 17 20 / 0.12);
+  --line-strong: rgb(16 17 20 / 0.26);
+  /* deep teal: the bright teal is too pale for small text on concrete */
+  --accent: #0a6159;
+  --accent-ink: #ffffff;
+  --accent-soft: rgb(10 97 89 / 0.1);
+
+  --spray: #cfdcd8;
+  --spray-hot: #19c2b0;
+
+  /* the same teal floods as the night shift */
+  --flood: #19c2b0;
+  --flood-ink: #0b0b0c;
+  --flood-muted: #0a3a35;
+  --flood-spray: #14ad9d;
+  --flood-raised: #2ccbb9;
+  --flood-sunken: #12ab9b;
+
+  --tape: #121316;
+  --tape-ink: #ffffff;
+
+  --zero: #ff5a1f;
+  --screen-accent: #19c2b0;
+  --grain-opacity: 0.07;
   color-scheme: light;
+}
+
+/* A device screen: always dark, whatever the section around it. */
+.screen {
+  --bg-sunken: #0b0b0c;
+  --ink: #f3f0e8;
+  --ink-muted: #b3b0a8;
+  --ink-faint: #8a8780;
+  --line: rgb(243 240 232 / 0.14);
+  --accent: var(--screen-accent);
+  background: var(--bg-sunken);
+  color: var(--ink);
+}
+
+/* A section drenched in the theme's flood colour. */
+.flood {
+  --bg: var(--flood);
+  --bg-raised: var(--flood-raised);
+  --bg-sunken: var(--flood-sunken);
+  --ink: var(--flood-ink);
+  --ink-muted: var(--flood-muted);
+  --ink-faint: var(--flood-muted);
+  --line: color-mix(in srgb, var(--flood-ink) 20%, transparent);
+  --line-strong: color-mix(in srgb, var(--flood-ink) 38%, transparent);
+  --accent: var(--flood-ink);
+  --accent-ink: var(--flood);
+  --accent-soft: color-mix(in srgb, var(--flood-ink) 12%, transparent);
+  --spray: var(--flood-spray);
+  background: var(--bg);
+  color: var(--ink);
 }
 
 @theme inline {
@@ -57,10 +132,16 @@
   --color-accent: var(--accent);
   --color-accent-ink: var(--accent-ink);
   --color-accent-soft: var(--accent-soft);
+  --color-spray: var(--spray);
+  --color-spray-hot: var(--spray-hot);
+  --color-zero: var(--zero);
+  --color-tape: var(--tape);
+  --color-tape-ink: var(--tape-ink);
 
-  --font-display: "Fraunces Variable", "Iowan Old Style", Georgia, serif;
-  --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Bricolage Grotesque Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Bricolage Grotesque Variable", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Geist Mono Variable", ui-monospace, "SF Mono", Menlo, monospace;
+  --font-spray: "Permanent Marker", "Bricolage Grotesque Variable", cursive;
 
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in-out-quart: cubic-bezier(0.76, 0, 0.24, 1);
@@ -77,11 +158,13 @@
     background: var(--bg);
     color: var(--ink);
     font-family: var(--font-sans);
-    font-size: 1rem;
+    font-size: 1.0625rem;
+    font-stretch: 100%;
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overflow-x: clip;
+    caret-color: var(--accent);
     transition: background-color 0.4s var(--ease-out-expo), color 0.4s var(--ease-out-expo);
   }
 
@@ -91,9 +174,12 @@
   }
 
   :focus-visible {
-    outline: 2px solid var(--accent);
+    outline: 3px solid var(--accent);
     outline-offset: 3px;
     border-radius: 2px;
+  }
+  .flood :focus-visible {
+    outline-color: var(--flood-ink);
   }
 
   button:not(:disabled),
@@ -116,12 +202,17 @@
 }
 
 @layer components {
-  /* Display serif with optical sizing turned up for headlines. */
+  /* Poster type: heavy, slightly condensed, tight, upper-case. */
   .font-display {
     font-family: var(--font-display);
-    font-optical-sizing: auto;
-    font-variation-settings: "SOFT" 30;
-    letter-spacing: -0.02em;
+    font-weight: 800;
+    font-stretch: 80%;
+    letter-spacing: -0.035em;
+    text-transform: uppercase;
+  }
+  .font-display em {
+    font-style: normal;
+    color: var(--accent);
   }
 
   /* Small uppercase mono label used for metadata. */
@@ -135,26 +226,94 @@
 
   .container-page {
     width: 100%;
-    max-width: 1320px;
+    max-width: 1440px;
     margin-inline: auto;
-    padding-inline: clamp(1.25rem, 4vw, 3rem);
+    padding-inline: clamp(1.25rem, 3.5vw, 3rem);
+  }
+
+  /* A wall tag: marker letters run through the spray filter (see SprayDefs). */
+  .spray {
+    font-family: var(--font-spray);
+    color: var(--spray);
+    line-height: 0.82;
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: -0.02em;
+    filter: url(#spray);
+    user-select: none;
+    pointer-events: none;
+  }
+
+  /* Gaffer tape: torn ends, a slight tilt, straightens when you reach for it. */
+  .tape {
+    --tilt: -2deg;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 2.75rem;
+    padding: 0.55rem 1.25rem;
+    font-family: var(--font-sans);
+    font-weight: 800;
+    font-stretch: 85%;
+    font-size: 0.9rem;
+    letter-spacing: 0.01em;
+    line-height: 1;
+    text-transform: uppercase;
+    color: var(--tape-ink);
+    background:
+      repeating-linear-gradient(90deg, rgb(255 255 255 / 0.035) 0 2px, transparent 2px 5px),
+      linear-gradient(180deg, rgb(255 255 255 / 0.07), transparent 45%, rgb(0 0 0 / 0.12)),
+      var(--tape);
+    transform: rotate(var(--tilt));
+    transition: transform 0.35s var(--ease-out-expo);
+    -webkit-mask:
+      conic-gradient(from -45deg at left, #0000 25%, #000 0) left / 7px 9px repeat-y,
+      conic-gradient(from 135deg at right, #0000 25%, #000 0) right / 7px 9px repeat-y,
+      linear-gradient(#000 0 0) center / calc(100% - 14px) 100% no-repeat;
+    mask:
+      conic-gradient(from -45deg at left, #0000 25%, #000 0) left / 7px 9px repeat-y,
+      conic-gradient(from 135deg at right, #0000 25%, #000 0) right / 7px 9px repeat-y,
+      linear-gradient(#000 0 0) center / calc(100% - 14px) 100% no-repeat;
+  }
+  .tape:hover,
+  .tape:focus-visible {
+    transform: rotate(0deg) translateY(-2px);
+  }
+  .tape:focus-visible {
+    outline-offset: 5px;
+  }
+  /* The loud strip: the theme's flood colour as tape. */
+  .tape-hot {
+    --tilt: 2deg;
+    color: var(--flood-ink);
+    background:
+      repeating-linear-gradient(90deg, rgb(255 255 255 / 0.06) 0 2px, transparent 2px 5px),
+      linear-gradient(180deg, rgb(255 255 255 / 0.12), transparent 45%, rgb(0 0 0 / 0.1)),
+      var(--flood);
+  }
+  .flood .tape-hot {
+    color: var(--flood);
+    background:
+      repeating-linear-gradient(90deg, rgb(255 255 255 / 0.05) 0 2px, transparent 2px 5px),
+      var(--flood-ink);
   }
 
   /* Underline that draws in from the left on hover. */
   .link-draw {
     background-image: linear-gradient(currentColor, currentColor);
-    background-size: 0% 1px;
+    background-size: 0% 2px;
     background-position: 0 100%;
     background-repeat: no-repeat;
     transition: background-size 0.5s var(--ease-out-expo);
   }
   .link-draw:hover,
   .link-draw:focus-visible {
-    background-size: 100% 1px;
+    background-size: 100% 2px;
   }
 }
 
-/* Film grain — adds tactility to flat colour fields. */
+/* Film grain — paper and concrete, not a flat screen. */
 .grain {
   position: fixed;
   inset: -50%;

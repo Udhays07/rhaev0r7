@@ -3,9 +3,13 @@ import { motion, useInView } from 'motion/react';
 import { ArrowUpRight, Check, Copy } from 'lucide-react';
 import { RevealLines } from '@/components/ui/RevealLines';
 import { GithubIcon, LinkedinIcon } from '@/components/ui/SocialIcons';
-import { Handle } from '@/components/ui/Handle';
+import { Handle, HandleText } from '@/components/ui/Handle';
+import { Spray } from '@/components/ui/Spray';
 import { PERSONAL_INFO, TERMINAL_COMMANDS } from '@/data/portfolioData';
 import { cn } from '@/lib/utils';
+import { setZeroMood } from '@/lib/zero';
+import { useIntroDone } from '@/lib/intro';
+import { LazyZeroCameo } from '@/components/three/Lazy';
 
 type Line = { kind: 'cmd' | 'out' | 'ok' | 'muted'; text: string };
 
@@ -69,13 +73,16 @@ function Terminal() {
     const out: Line[] = [{ kind: 'cmd', text: raw }];
     if (cmd === 'help') {
       TERMINAL_COMMANDS.forEach((c) => out.push({ kind: 'out', text: `${c.command.padEnd(12)} ${c.description}` }));
+      setZeroMood('happy');
     } else if (cmd === 'email') {
       const ok = await copyText(PERSONAL_INFO.email);
       out.push(ok ? { kind: 'ok', text: `Copied ${PERSONAL_INFO.email}` } : { kind: 'out', text: PERSONAL_INFO.email });
+      setZeroMood('happy');
     } else {
       const found = TERMINAL_COMMANDS.find((c) => c.command === cmd);
       if (found) found.output.forEach((t) => out.push({ kind: 'out', text: t }));
       else out.push({ kind: 'muted', text: `command not found: ${cmd} — try \`help\`` });
+      setZeroMood(found ? 'happy' : 'confused');
     }
     setLines((l) => [...l, ...out]);
   };
@@ -94,9 +101,10 @@ function Terminal() {
       const next = cursor - 1;
       setCursor(next);
       setValue(next >= 0 ? history[next] : '');
-    } else if (e.key === 'Tab' && value) {
+    } else if (e.key === 'Tab' && value && !e.shiftKey) {
+      // Complete a partial command only; a finished one lets Tab move on, so focus never gets stuck.
       const match = COMMAND_NAMES.find((c) => c.startsWith(value.toLowerCase()));
-      if (match) {
+      if (match && match !== value.toLowerCase()) {
         e.preventDefault();
         setValue(match);
       }
@@ -107,10 +115,10 @@ function Terminal() {
   };
 
   return (
-    <div ref={box} className="border border-line bg-bg-sunken">
+    <div ref={box} className="screen border-2 border-ink shadow-[0_24px_60px_-20px_rgb(0_0_0/0.5)]">
       <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
         <span className="font-mono text-xs text-ink-faint">
-          <span className="text-ink-muted">{PERSONAL_INFO.nickname}</span>@connect:~
+          <HandleText className="text-ink-muted" />@connect:~
         </span>
         <span className="hidden font-mono text-xs text-ink-faint sm:inline">↑↓ history · tab completes</span>
       </div>
@@ -146,7 +154,10 @@ function Terminal() {
             ref={input}
             value={value}
             disabled={!booted}
-            onChange={(e) => setValue(e.target.value)}
+            onChange={(e) => {
+              setValue(e.target.value);
+              setZeroMood('curious');
+            }}
             onKeyDown={onKeyDown}
             autoComplete="off"
             autoCapitalize="off"
@@ -161,10 +172,12 @@ function Terminal() {
 
 export function Connect() {
   const [copied, setCopied] = useState(false);
+  const introDone = useIntroDone();
 
   const onCopy = async () => {
     if (await copyText(PERSONAL_INFO.email)) {
       setCopied(true);
+      setZeroMood('happy');
       window.setTimeout(() => setCopied(false), 1800);
     }
   };
@@ -175,24 +188,21 @@ export function Connect() {
   ];
 
   return (
-    <section id="contact" className="pb-16 pt-20 md:pt-28">
+    <section id="contact" className="flood relative isolate overflow-hidden pb-20 pt-[clamp(5rem,12vw,10rem)]">
+      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-[4%] -z-10 flex justify-center">
+        <Spray size="clamp(8rem,26vw,28rem)" tilt={-5} className="static">
+          HELLO
+        </Spray>
+      </div>
       <div className="container-page">
-        <div className="grid grid-cols-12 gap-x-6 border-t border-line pt-6">
-          <p className="label col-span-12 flex items-center gap-3 md:col-span-3">
-            <span className="text-accent">06</span>
-            <span aria-hidden className="h-px w-6 bg-line-strong" />
-            Connect
-          </p>
-        </div>
-
         <RevealLines
-          className="mt-14 text-[clamp(3rem,10vw,10rem)] leading-[0.9] font-[330] tracking-[-0.035em]"
-          lines={['Let’s build', <>something <em className="italic text-accent">useful.</em></>]}
+          className="font-display text-[clamp(3.2rem,11vw,11rem)] leading-[0.84]"
+          lines={['Let’s build', <>something <em className="underline decoration-[0.06em] underline-offset-[0.08em]">useful.</em></>]}
         />
 
         <div className="mt-14 grid grid-cols-12 gap-x-6 gap-y-14 md:mt-20">
           <div className="col-span-12 lg:col-span-6">
-            <p className="max-w-[44ch] text-lg text-ink-muted">
+            <p className="max-w-[44ch] text-xl leading-snug">
               I’m looking for teams where I can work with experienced engineers, take ownership across the stack, and
               keep learning how production systems are built.
             </p>
@@ -200,16 +210,16 @@ export function Connect() {
               Find me as <Handle play="view" className="text-ink" /> — same name, most places.
             </p>
 
-            <div className="mt-10 flex flex-wrap items-center gap-4 border-b border-line pb-6">
-              <a href={`mailto:${PERSONAL_INFO.email}`} className="link-draw font-display text-[clamp(1.4rem,3.2vw,2.5rem)] leading-tight">
+            <div className="mt-10 flex flex-wrap items-center gap-5 border-b-2 border-ink pb-8">
+              <a href={`mailto:${PERSONAL_INFO.email}`} className="link-draw break-all font-display text-[clamp(1.5rem,3.6vw,3rem)] normal-case leading-tight tracking-[-0.02em]">
                 {PERSONAL_INFO.email}
               </a>
               <button
                 type="button"
                 onClick={onCopy}
-                className="inline-flex items-center gap-2 rounded-full border border-line-strong px-3 py-1.5 text-sm text-ink-muted transition-colors hover:border-ink hover:text-ink"
+                className="tape"
               >
-                {copied ? <Check size={14} className="text-accent" /> : <Copy size={14} />}
+                {copied ? <Check size={16} strokeWidth={2.5} /> : <Copy size={16} strokeWidth={2.5} />}
                 <span aria-live="polite">{copied ? 'Copied' : 'Copy'}</span>
               </button>
             </div>
@@ -221,11 +231,11 @@ export function Connect() {
                     href={l.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group flex min-h-11 items-center gap-4 border-b border-line py-5 transition-colors hover:text-accent"
+                    className="group flex min-h-11 items-center gap-4 border-b-2 border-ink py-5"
                   >
-                    <span className="text-ink-muted transition-colors group-hover:text-accent">{l.icon}</span>
-                    <span className="text-xl">{l.label}</span>
-                    <span className="font-mono text-sm text-ink-faint">{l.handle}</span>
+                    <span>{l.icon}</span>
+                    <span className="font-display text-3xl leading-none tracking-normal">{l.label}</span>
+                    <span className="font-mono text-sm text-ink-muted">{l.handle}</span>
                     <ArrowUpRight size={20} strokeWidth={1.5} className="ml-auto transition-transform duration-500 group-hover:-translate-y-1 group-hover:translate-x-1" />
                     <span className="sr-only">(opens in a new tab)</span>
                   </a>
@@ -234,7 +244,11 @@ export function Connect() {
             </ul>
           </div>
 
-          <div className="col-span-12 lg:col-span-5 lg:col-start-8">
+          <div className="relative col-span-12 mt-24 lg:col-span-5 lg:col-start-8 lg:mt-0">
+            {/* Zero perches on the terminal and reacts to what you type. */}
+            <div className="absolute bottom-full right-4 -mb-px h-32 w-32 md:right-6 md:h-36 md:w-36">
+              <LazyZeroCameo ready={introDone} />
+            </div>
             <Terminal />
           </div>
         </div>

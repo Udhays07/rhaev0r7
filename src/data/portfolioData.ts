@@ -27,6 +27,7 @@ export const NAV_SECTIONS = [
   { id: 'about', label: 'About' },
   { id: 'stack', label: 'Stack' },
   { id: 'thinking', label: 'Thinking' },
+  { id: 'principles', label: 'Principles' },
   // { id: 'playground', label: 'Playground' }, — section hidden for now
   // { id: 'systems', label: 'Systems' }, — section hidden for now
   { id: 'direction', label: 'Direction' },
@@ -621,6 +622,11 @@ export const TERMINAL_COMMANDS: TerminalCommand[] = [
       `linkedin     ${PERSONAL_INFO.linkedin}`,
       `email        ${PERSONAL_INFO.email}`,
     ],
+  },
+  {
+    command: 'zero',
+    description: 'Meet the mascot',
+    output: ['Zero — the slashed 0 from rhaev0r7, given legs.', 'Wears the slash as a visor. Runs on curiosity.', 'Try clicking it.'],
   },
   { command: 'email', description: 'Copy my email address', output: [] },
   { command: 'clear', description: 'Clear the screen', output: [] },

@@ -7,8 +7,8 @@
     <meta name="description" content="Udhaya Moorthy (rhaev0r7) — a software engineer who started with interfaces and is now exploring the systems behind them: React, TypeScript, Python, FastAPI and applied AI." />
     <meta name="author" content="Udhaya Moorthy (rhaev0r7)" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
-    <meta name="theme-color" content="#f3efe6" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0b0b0c" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#e6e6e1" media="(prefers-color-scheme: light)" />
     <meta name="color-scheme" content="dark light" />
 
     <meta property="og:type" content="website" />
@@ -23,6 +23,10 @@
           var stored = localStorage.getItem('theme');
           var theme = stored || (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
           document.documentElement.dataset.theme = theme;
+          // The browser bar follows a chosen theme too, not only the OS setting.
+          document.querySelectorAll('meta[name="theme-color"]').forEach(function (m) {
+            m.content = theme === 'light' ? '#e6e6e1' : '#0b0b0c';
+          });
         } catch (e) {
           document.documentElement.dataset.theme = 'dark';
         }

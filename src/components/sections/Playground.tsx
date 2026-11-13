@@ -30,9 +30,8 @@ export function Playground() {
     <section id="playground" className="py-20 md:py-28">
       <div className="container-page">
         <SectionHeader
-          index="04"
-          label="Playground"
-          title={['Small experiments,', <>not <em className="italic text-accent">screenshots.</em></>]}
+          spray="PLAYGROUND"
+          title={['Small experiments,', <>not <em>screenshots.</em></>]}
           intro="Things I have explored, shrunk down to something you can poke at. Each one runs entirely in your browser."
         />
 

@@ -59,14 +59,23 @@ export function Handle({ className, play, enabled = true, delay = 0 }: HandlePro
     <span
       ref={ref}
       onMouseEnter={decode}
-      aria-label={HANDLE}
       className={cn('inline-block whitespace-nowrap font-mono tabular-nums', className)}
     >
+      <span className="sr-only">{HANDLE}</span>
       {chars.map((c, i) => (
-        <span key={i} aria-hidden className={HANDLE[i] === '0' && c === '0' ? 'text-accent' : undefined}>
+        <span key={i} aria-hidden className={HANDLE[i] === '0' && c === '0' ? 'text-zero' : undefined}>
           {c}
         </span>
       ))}
+    </span>
+  );
+}
+
+/** The handle as plain text (no decode effect), with Zero's orange 0. */
+export function HandleText({ className }: { className?: string }) {
+  return (
+    <span className={className}>
+      {HANDLE.split('').map((c, i) => (c === '0' ? <span key={i} className="text-zero">0</span> : c))}
     </span>
   );
 }

@@ -1,50 +1,21 @@
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
+import { ArrowRight } from 'lucide-react';
 import { getLenis } from '@/lib/scroll';
-import { EASE_OUT_EXPO } from '@/lib/utils';
-import { PERSONAL_INFO } from '@/data/portfolioData';
-import { Handle } from '@/components/ui/Handle';
-
-const COMMAND = 'npm run portfolio';
-const SPINNER = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
-const BAR_CELLS = 24;
+import { EASE_OUT_EXPO, prefersReducedMotion } from '@/lib/utils';
+import { DrawZero } from './intro/DrawZero';
+import { HandleText } from '@/components/ui/Handle';
 
 /**
- * Every line is a real task: it resolves when that thing actually finishes,
- * and the time shown is measured, not invented. A small floor per task keeps
- * each line readable on fast connections.
+ * The intro is on screen for a standard five seconds, unless skipped:
+ * 3.8s for the scene, a 0.5s sweep of colour, then 0.7s lifting away.
+ * The scene in the middle is swappable; this shell owns timing, skip and exit.
  */
-const TASKS: { label: string; detail: string; run: () => Promise<unknown>; floor: number }[] = [
-  { label: 'resolve fonts', detail: 'Fraunces · Geist · Geist Mono', run: () => document.fonts.ready, floor: 260 },
-  { label: 'mount interface', detail: '6 sections', run: () => Promise.resolve(), floor: 240 },
-  {
-    label: 'load assets',
-    detail: 'styles · scripts',
-    run: () =>
-      document.readyState === 'complete'
-        ? Promise.resolve()
-        : new Promise((r) => window.addEventListener('load', r, { once: true })),
-    floor: 240,
-  },
-  {
-    label: 'warm up interactions',
-    detail: 'scroll · motion',
-    run: () =>
-      new Promise((r) => ('requestIdleCallback' in window ? requestIdleCallback(() => r(null), { timeout: 400 }) : setTimeout(r, 120))),
-    floor: 220,
-  },
-];
+const DURATION = 3800;
+const SWEEP = 0.5;
+const LIFT = 0.7;
 
-const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
-function Spinner() {
-  const [i, setI] = useState(0);
-  useEffect(() => {
-    const id = window.setInterval(() => setI((n) => (n + 1) % SPINNER.length), 80);
-    return () => window.clearInterval(id);
-  }, []);
-  return <span className="text-accent">{SPINNER[i]}</span>;
-}
+const easeInOut = (u: number) => (u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2);
 
 interface LoaderProps {
   /** Fired as the curtain starts lifting — the page can begin its entrance. */
@@ -54,188 +25,111 @@ interface LoaderProps {
 }
 
 export function Loader({ onReveal, onDone }: LoaderProps) {
-  const [typed, setTyped] = useState('');
-  const [current, setCurrent] = useState(-1);
-  const [times, setTimes] = useState<number[]>([]);
-  const [total, setTotal] = useState<number | null>(null);
-  const [visible, setVisible] = useState(true);
+  const [reduce] = useState(prefersReducedMotion);
+  const [progress, setProgress] = useState(0);
+  const [phase, setPhase] = useState<'playing' | 'wipe' | 'gone'>('playing');
   const finished = useRef(false);
-  const started = useRef(performance.now());
+  const skipRef = useRef<HTMLButtonElement>(null);
 
-  const finish = () => {
+  const finish = (skipped = false) => {
     if (finished.current) return;
     finished.current = true;
-    onReveal();
-    setVisible(false);
+    setProgress(1);
+    // A skip goes straight out, and reduced motion has no sweep: just leave.
+    if (reduce || skipped) {
+      onReveal();
+      setPhase('gone');
+    } else {
+      setPhase('wipe');
+    }
   };
 
-  // Lock scrolling underneath while the loader is up.
+  // Hold the page still underneath, and put focus on Skip without a ring.
   useEffect(() => {
     document.documentElement.dataset.loading = 'true';
     document.body.style.overflow = 'hidden';
     window.scrollTo(0, 0);
+    skipRef.current?.focus({ preventScroll: true, focusVisible: false } as FocusOptions);
     return () => {
       delete document.documentElement.dataset.loading;
       document.body.style.overflow = '';
+      // Smooth scrolling was held while the intro played.
       getLenis()?.start();
     };
   }, []);
 
-  // Type the command, then run each task in order.
+  // The scene plays out over the duration; the finish also waits for fonts,
+  // though on any normal connection they're long done.
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      for (let i = 1; i <= COMMAND.length; i++) {
-        await wait(28 + Math.random() * 30);
-        if (cancelled) return;
-        setTyped(COMMAND.slice(0, i));
-      }
-      await wait(180);
-      for (let i = 0; i < TASKS.length; i++) {
-        if (cancelled) return;
-        setCurrent(i);
-        const t0 = performance.now();
-        await Promise.all([TASKS[i].run(), wait(TASKS[i].floor)]);
-        if (cancelled) return;
-        setTimes((ts) => [...ts, Math.round(performance.now() - t0)]);
-      }
-      setCurrent(TASKS.length);
-      setTotal((performance.now() - started.current) / 1000);
-      await wait(650);
-      if (!cancelled) finish();
-    })();
-    return () => {
-      cancelled = true;
+    const start = performance.now();
+    let raf = 0;
+    let fontsIn = false;
+    document.fonts.ready.then(() => (fontsIn = true));
+    const tick = (now: number) => {
+      const u = Math.min(1, (now - start) / DURATION);
+      setProgress(easeInOut(u));
+      if (u >= 1 && fontsIn) return finish();
+      raf = requestAnimationFrame(tick);
     };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
   }, []);
 
-  // Any of Esc / Enter / Space skips.
+  // Esc, Enter or Space skips.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (['Escape', 'Enter', ' '].includes(e.key)) {
         e.preventDefault();
-        finish();
+        finish(true);
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  const doneCount = times.length;
-  const target = (doneCount / TASKS.length) * 100;
-  const [pct, setPct] = useState(0);
-
-  // Ease the readout toward the real progress so the bar fills cell by cell.
-  useEffect(() => {
-    let raf = 0;
-    const step = () => {
-      setPct((p) => {
-        const next = p + (target - p) * 0.18;
-        return Math.abs(target - next) < 0.5 ? target : next;
-      });
-      raf = requestAnimationFrame(step);
-    };
-    raf = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(raf);
-  }, [target]);
-
-  const filled = Math.round((pct / 100) * BAR_CELLS);
-
   return (
     <AnimatePresence onExitComplete={onDone}>
-      {visible && (
+      {phase !== 'gone' && (
         <motion.div
           key="loader"
-          role="status"
-          aria-live="polite"
-          aria-label="Loading portfolio"
-          onClick={finish}
-          className="fixed inset-0 z-[100] flex cursor-pointer flex-col bg-bg text-ink"
-          exit={{ clipPath: 'inset(0 0 100% 0)' }}
-          initial={{ clipPath: 'inset(0 0 0% 0)' }}
-          transition={{ duration: 0.9, ease: [0.76, 0, 0.24, 1] }}
+          className="fixed inset-0 z-[100] flex flex-col overflow-hidden bg-bg text-ink"
+          initial={false}
+          exit={reduce ? { opacity: 0 } : { clipPath: 'inset(0 0 100% 0)' }}
+          transition={{ duration: reduce ? 0.3 : LIFT, ease: [0.76, 0, 0.24, 1] }}
         >
-          {/* Faint grid, like graph paper under the terminal. */}
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0 opacity-[0.35] [mask-image:radial-gradient(ellipse_at_center,#000_20%,transparent_70%)]"
-            style={{
-              backgroundImage:
-                'linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px)',
-              backgroundSize: '48px 48px',
-            }}
-          />
+          <p role="status" className="sr-only">
+            {phase === 'playing' ? 'Loading portfolio' : 'Portfolio ready'}
+          </p>
 
-          <div className="container-page relative flex items-center justify-between pt-6 font-mono text-xs text-ink-faint">
-            <span>
-              <span className="text-ink-muted">{PERSONAL_INFO.nickname}</span>@portfolio:~
+          <div className="container-page relative z-10 flex h-[4.5rem] shrink-0 items-center justify-between">
+            <span aria-hidden className="font-mono text-sm text-ink-muted">
+              <HandleText /> <span className="text-ink-faint">/ portfolio</span>
             </span>
-            <button type="button" onClick={finish} className="rounded-full border border-line-strong px-3 py-1 transition-colors hover:border-ink hover:text-ink">
-              skip <span className="hidden sm:inline">· esc</span>
+            <button ref={skipRef} type="button" onClick={() => finish(true)} className="tape tape-hot">
+              Skip
+              <ArrowRight size={16} strokeWidth={2.5} />
             </button>
           </div>
 
-          <div className="container-page relative flex-1 pt-[clamp(4rem,24vh,15rem)]">
-            <div className="w-full max-w-xl font-mono text-[13px] leading-7 sm:text-sm">
-              <p>
-                <span className="text-accent">❯ </span>
-                <span>{typed}</span>
-                {current === -1 && <span className="ml-0.5 inline-block h-[1.05em] w-[0.55em] translate-y-[0.18em] animate-pulse bg-ink" />}
-              </p>
-
-              <ul className="mt-3 space-y-0.5">
-                {TASKS.map((task, i) => {
-                  if (i > current) return null;
-                  const isDone = i < doneCount;
-                  return (
-                    <motion.li
-                      key={task.label}
-                      initial={{ opacity: 0, x: -8 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.3, ease: EASE_OUT_EXPO }}
-                      className="grid grid-cols-[1.25rem_1fr_auto] gap-x-2"
-                    >
-                      {isDone ? <span className="text-accent">✓</span> : <Spinner />}
-                      <span className={isDone ? 'text-ink' : 'text-ink-muted'}>
-                        {task.label}
-                        <span className="hidden text-ink-faint sm:inline"> — {task.detail}</span>
-                      </span>
-                      <span className="tabular-nums text-ink-faint">{isDone ? `${times[i]}ms` : ''}</span>
-                    </motion.li>
-                  );
-                })}
-              </ul>
-
-              <div className="mt-6 flex items-center gap-3 text-ink-faint" aria-hidden>
-                <span className="tracking-[-0.05em]">
-                  [<span className="text-accent">{'█'.repeat(filled)}</span>
-                  <span className="text-line-strong">{'░'.repeat(BAR_CELLS - filled)}</span>]
-                </span>
-                <span className="tabular-nums text-ink">{String(Math.round(pct)).padStart(3, '\u00a0')}%</span>
-              </div>
-
-              <AnimatePresence>
-                {total !== null && (
-                  <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: EASE_OUT_EXPO }}>
-                    <p className="mt-6 text-ink-muted">
-                      <span className="text-accent">✓</span> ready in <span className="text-ink">{total.toFixed(2)}s</span>
-                    </p>
-                    <Handle play="mount" className="mt-6 block text-[clamp(3rem,9vw,6.5rem)] leading-none font-medium tracking-[-0.04em]" />
-                    <p className="mt-3 font-display text-xl italic text-ink-muted sm:text-2xl">
-                      {PERSONAL_INFO.name} — Software Engineer
-                    </p>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+          <div aria-hidden className="relative flex min-h-0 flex-1 flex-col pb-[4.5rem]">
+            <DrawZero progress={reduce ? 1 : progress} />
           </div>
 
-          <div className="container-page relative flex justify-between pb-6 font-mono text-xs text-ink-faint">
-            <span>Software Engineer</span>
-            <span>Frontend → Backend → AI</span>
-          </div>
-          {/* Accent edge on the curtain as it lifts. */}
-          <span aria-hidden className="absolute inset-x-0 bottom-0 h-px bg-accent" />
+          {/* The finish: a sheet of the brand colour sweeps up, then lifts away with the loader. */}
+          {!reduce && (
+            <motion.div
+              aria-hidden
+              className="flood absolute inset-0 z-20"
+              initial={{ clipPath: 'inset(100% 0 0 0)' }}
+              animate={phase === 'wipe' ? { clipPath: 'inset(0% 0 0 0)' } : { clipPath: 'inset(100% 0 0 0)' }}
+              transition={{ duration: SWEEP, ease: EASE_OUT_EXPO }}
+              onAnimationComplete={() => {
+                if (phase !== 'wipe') return;
+                onReveal();
+                setPhase('gone');
+              }}
+            />
+          )}
         </motion.div>
       )}
     </AnimatePresence>

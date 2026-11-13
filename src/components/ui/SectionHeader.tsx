@@ -1,39 +1,39 @@
 import type { ReactNode } from 'react';
 import { RevealLines } from './RevealLines';
-import { Reveal } from './Reveal';
+import { Spray } from './Spray';
+import { cn } from '@/lib/utils';
 
 interface SectionHeaderProps {
-  index: string;
-  label: string;
+  /** The wall tag sprayed behind the heading. */
+  spray: string;
   title: ReactNode[];
   intro?: ReactNode;
+  align?: 'center' | 'left';
 }
 
 /**
- * Every section opens the same way: a numbered margin label on the left,
- * a serif headline on the right. The repetition is the system.
+ * A section opens like a poster on a wall: a huge sprayed tag behind,
+ * the heading pasted over it in heavy type.
  */
-export function SectionHeader({ index, label, title, intro }: SectionHeaderProps) {
+export function SectionHeader({ spray, title, intro, align = 'center' }: SectionHeaderProps) {
+  const center = align === 'center';
   return (
-    <header className="grid grid-cols-12 gap-x-6 gap-y-6 border-t border-line pt-6 mb-14 md:mb-20">
-      <div className="col-span-12 md:col-span-3">
-        <p className="label flex items-center gap-3">
-          <span className="text-accent">{index}</span>
-          <span aria-hidden className="h-px w-6 bg-line-strong" />
-          <span>{label}</span>
-        </p>
+    <header className={cn('relative isolate mb-16 py-[clamp(3rem,9vw,8rem)] md:mb-24', center && 'text-center')}>
+      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 flex items-center justify-center overflow-visible">
+        <Spray size="clamp(7rem,24vw,22rem)" className="static">
+          {spray}
+        </Spray>
       </div>
-      <div className="col-span-12 md:col-span-9">
-        <RevealLines
-          lines={title}
-          className="text-[clamp(2.25rem,5.5vw,4.75rem)] leading-[0.98] font-[380] text-ink"
-        />
-        {intro && (
-          <Reveal delay={0.15}>
-            <p className="mt-6 max-w-[58ch] text-lg leading-relaxed text-ink-muted">{intro}</p>
-          </Reveal>
+      <RevealLines
+        lines={title}
+        className={cn(
+          'font-display text-[clamp(2.6rem,7.4vw,7rem)] leading-[0.88]',
+          center && '[&>span]:mx-auto',
         )}
-      </div>
+      />
+      {intro && (
+        <p className={cn('mt-8 max-w-[56ch] text-lg leading-relaxed text-ink-muted md:text-xl', center && 'mx-auto')}>{intro}</p>
+      )}
     </header>
   );
 }

@@ -28,12 +28,11 @@ export function Thinking() {
   const current = THOUGHT_NODES[active];
 
   return (
-    <section id="thinking" className="py-20 md:py-28">
+    <section id="thinking" className="flood relative overflow-hidden py-[clamp(4rem,10vw,8rem)]">
       <div className="container-page">
         <SectionHeader
-          index="03"
-          label="How I think"
-          title={['From a problem', <>to a <em className="italic text-accent">product.</em></>]}
+          spray="THINK"
+          title={['From a problem', <>to a <em className="underline decoration-[0.07em] underline-offset-[0.1em]">product.</em></>]}
           intro="The technology is the easy part to list. This is the part I actually care about: the questions I ask before, during and after writing code."
         />
 
@@ -45,7 +44,7 @@ export function Thinking() {
                 <AnimatePresence mode="popLayout" initial={false}>
                   <motion.span
                     key={current.stepNumber}
-                    className="absolute font-display text-[7rem] leading-none font-[300] text-accent"
+                    className="absolute font-spray text-[7.5rem] leading-none text-ink"
                     initial={{ y: '100%' }}
                     animate={{ y: '0%' }}
                     exit={{ y: '-100%' }}
@@ -57,8 +56,8 @@ export function Thinking() {
               </div>
 
               <nav aria-label="Thinking steps" className="relative mt-8 pl-6">
-                <span aria-hidden className="absolute left-0 top-1 bottom-1 w-px bg-line" />
-                <motion.span aria-hidden className="absolute left-0 top-1 bottom-1 w-px origin-top bg-accent" style={{ scaleY: fill }} />
+                <span aria-hidden className="absolute left-0 top-1 bottom-1 w-[3px] bg-line" />
+                <motion.span aria-hidden className="absolute left-0 top-1 bottom-1 w-[3px] origin-top bg-ink" style={{ scaleY: fill }} />
                 <ol className="space-y-1">
                   {THOUGHT_NODES.map((n, i) => (
                     <li key={n.id}>
@@ -72,7 +71,7 @@ export function Thinking() {
                         )}
                       >
                         <span className="font-mono text-xs">{n.stepNumber}</span>
-                        <span className="text-lg">{n.title}</span>
+                        <span className="font-display text-xl tracking-normal">{n.title}</span>
                       </button>
                     </li>
                   ))}
@@ -92,22 +91,29 @@ export function Thinking() {
                 key={n.id}
                 id={`step-${n.id}`}
                 data-index={i}
-                className={cn(
-                  'border-t border-line py-12 transition-opacity duration-700 md:min-h-[70vh] md:py-16',
-                  i === active ? 'md:opacity-100' : 'md:opacity-30',
-                )}
+                data-active={i === active}
+                className="group/step border-t-2 border-ink py-12 md:min-h-[54vh] md:py-16"
               >
                 <p className="label flex items-center gap-3">
                   <span className="text-accent">{n.stepNumber}</span>
                   {n.subtitle}
                 </p>
-                <h3 className="mt-4 font-display text-[clamp(2.25rem,5vw,4rem)] leading-none font-[360]">{n.title}</h3>
+                {/* Focus moves by colour, not opacity: a resting step stays readable
+                    (ink-muted passes AA in both themes), the active one comes forward. */}
+                <h3 className="mt-4 font-display text-[clamp(2.8rem,6.5vw,6rem)] leading-[0.85] transition-colors duration-500 md:text-ink-muted md:group-data-[active=true]/step:text-ink">
+                  {n.title}
+                </h3>
                 <p className="mt-5 max-w-[52ch] text-lg leading-relaxed text-ink-muted">{n.description}</p>
 
                 <ul className="mt-10">
                   {n.keyQuestions.map((q) => (
-                    <li key={q} className="flex gap-4 border-b border-line py-3.5 text-lg md:text-xl">
-                      <span className="font-mono text-sm text-accent pt-1" aria-hidden>?</span>
+                    <li
+                      key={q}
+                      className="flex gap-4 border-b border-line py-3.5 text-lg transition-colors duration-500 md:text-xl md:text-ink-muted md:group-data-[active=true]/step:text-ink"
+                    >
+                      <span className="pt-1 font-mono text-sm text-ink-faint transition-colors duration-500 group-data-[active=true]/step:text-accent max-md:text-accent" aria-hidden>
+                        ?
+                      </span>
                       {q}
                     </li>
                   ))}

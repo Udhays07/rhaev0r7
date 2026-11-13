@@ -1,4 +1,5 @@
 import type Lenis from 'lenis';
+import { prefersReducedMotion } from '@/lib/utils';
 
 /** Nav height plus breathing room, used when jumping to a section. */
 export const SCROLL_OFFSET = -72;
@@ -22,6 +23,6 @@ export function scrollToTarget(target: string | HTMLElement) {
     instance.scrollTo(el, { offset: SCROLL_OFFSET, duration: 1.2, force: true });
   } else {
     const top = el.getBoundingClientRect().top + window.scrollY + SCROLL_OFFSET;
-    window.scrollTo({ top, behavior: 'smooth' });
+    window.scrollTo({ top, behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
   }
 }
